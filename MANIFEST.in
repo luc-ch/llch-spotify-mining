@@ -1,0 +1,2 @@
+include project.version
+include README.md
