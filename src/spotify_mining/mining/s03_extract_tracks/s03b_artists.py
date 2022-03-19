@@ -35,7 +35,7 @@ class ExtractSpotifyArtists(ExtractSpotifyBase):
                 continue
             processed += len(artist_ids)
             print(processed, end=" ")
-            df_artists = self._get_artists_subset(",".join(artist_ids))
+            df_artists = self.get_artists_subset(artist_ids)
             self._save_df_to_postgres(df_artists)
 
     def _save_df_to_postgres(self, df_artists):
@@ -50,8 +50,9 @@ class ExtractSpotifyArtists(ExtractSpotifyBase):
             "rel_artists_genres", self.engine, if_exists="append", index=False
         )
 
-    def _get_artists_subset(self, aux_artists_ids):
-        path = f"https://api.spotify.com/v1/artists/?ids={aux_artists_ids}"
+    def get_artists_subset(self, artist_ids):
+        aux_artist_ids = ",".join(artist_ids)
+        path = f"https://api.spotify.com/v1/artists/?ids={aux_artist_ids}"
         artist_basics = []
         try:
             r = requests.get(path, headers=self.get_payload_with_token())
@@ -67,7 +68,7 @@ class ExtractSpotifyArtists(ExtractSpotifyBase):
                 }
                 artist_basics.append(x)
         except Exception as e:
-            print("Something went wrong: |", e, "|", path)
+            print("ERROR: get_artists_subset: |", e, "|", path)
         return pd.DataFrame(artist_basics)
 
     def _get_artists(self):

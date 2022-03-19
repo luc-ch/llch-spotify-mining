@@ -12,12 +12,6 @@ if __name__ == "__main__":
     """
     )
     parser.add_argument(
-        "-m",
-        "--message",
-        type=str,
-        help="Message to be sent. By default, it is of type information.",
-    )
-    parser.add_argument(
         "--config",
         type=str,
         default="./config.ini",

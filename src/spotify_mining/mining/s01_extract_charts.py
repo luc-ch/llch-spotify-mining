@@ -37,15 +37,47 @@ class ExtractCharts:
         ):
             self.store_charts_from_region(region, label)
 
-    def get_one_chart(self, tr, ddd, region):
-        td = tr.find_all("td")
-        web = td[0].find("a", href=True)["href"]
-        position = int(td[1].text)
-        track = td[3].find("strong").text
-        artist = td[3].find("span").text
-        streams = int(td[4].text.replace(",", ""))
-        track_id = web.rsplit("/", 1)[-1]
-        return [region, ddd, position, track_id, streams, track, artist]
+    def store_charts_from_region(self, region="ar", label="Argentina", edate=None):
+        if edate is None:
+            edate = datetime.now()
+        sdate = self.sdate
+        edate = edate.date()
+        dates = self.load_dates_charts(region, sdate, edate)
+        print(f"{label}", end=" - ")
+
+        if self.save_to_file:
+            os.makedirs(f"{self.dataset_folder}/{region}/", exist_ok=True)
+
+        err = 0
+        if len(dates) > 5:
+            for d in tqdm(dates):
+                e = self.upload_data(d, region)
+                err += e
+                if err > 5:
+                    break
+            print()
+        else:
+            for d in dates:
+                self.upload_data(d, region)
+
+    def upload_data(
+        self, d: date, region: str,
+    ):
+        dd = d.strftime(self.date_format)
+        if len(self.if_chart_loaded(region, dd)) > 0:
+            return 0
+        try:
+            df = self.get_charts_in_dataframe(dd, region)
+            if self.save_to_file:
+                df.to_csv(
+                    f"{self.dataset_folder}/{region}/charts_{dd}.csv", index=False
+                )
+            df.to_sql("charts", self.engine, if_exists="append", index=False)
+            return 0
+        except Exception:
+            print(dd, end=" - ")
+            time.sleep(2)
+            return 1
 
     def get_charts_in_dataframe(self, date="2020-04-17", region="ar"):
         scraper = cloudscraper.create_scraper()
@@ -68,6 +100,16 @@ class ExtractCharts:
             for tr in soup.find_all("tbody")[0].find_all("tr")
         ]
         return pd.DataFrame(list_charts, columns=columns)
+
+    def get_one_chart(self, tr, ddd, region):
+        td = tr.find_all("td")
+        web = td[0].find("a", href=True)["href"]
+        position = int(td[1].text)
+        track = td[3].find("strong").text
+        artist = td[3].find("span").text
+        streams = int(td[4].text.replace(",", ""))
+        track_id = web.rsplit("/", 1)[-1]
+        return [region, ddd, position, track_id, streams, track, artist]
 
     def date_range(self, start: date, end: date):
         delta = end - start
@@ -100,48 +142,6 @@ class ExtractCharts:
         """
         chart = postgres.execute_command_postgres(command)
         return chart
-
-    def upload_data(
-        self, d: date, region: str,
-    ):
-        dd = d.strftime(self.date_format)
-        if len(self.if_chart_loaded(region, dd)) > 0:
-            return
-        try:
-            df = self.get_charts_in_dataframe(dd, region)
-            if self.save_to_file:
-                df.to_csv(
-                    f"{self.dataset_folder}/{region}/charts_{dd}.csv", index=False
-                )
-            df.to_sql("charts", self.engine, if_exists="append", index=False)
-            return 0
-        except Exception:
-            print(dd, end=" - ")
-            time.sleep(2)
-            return 1
-
-    def store_charts_from_region(self, region="ar", label="Argentina", edate=None):
-        if edate is None:
-            edate = datetime.now()
-        sdate = self.sdate
-        edate = edate.date()
-        dates = self.load_dates_charts(region, sdate, edate)
-        print(f"{label}", end=" - ")
-
-        if self.save_to_file:
-            os.makedirs(f"{self.dataset_folder}/{region}/", exist_ok=True)
-
-        err = 0
-        if len(dates) > 5:
-            for d in tqdm(dates):
-                e = self.upload_data(d, region)
-                err += e
-                if err > 5:
-                    break
-            print()
-        else:
-            for d in dates:
-                self.upload_data(d, region)
 
 
 def run():

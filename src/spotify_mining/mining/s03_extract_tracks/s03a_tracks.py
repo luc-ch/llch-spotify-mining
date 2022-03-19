@@ -35,7 +35,7 @@ class ExtractSpotifyTracks(ExtractSpotifyBase):
                 continue
             processed += len(track_ids)
             print(processed, end=" ")
-            df_track_basics = self._get_tracks_data_subset(",".join(track_ids))
+            df_track_basics = self.get_tracks_data_subset(track_ids)
             self._save_df_to_postgres(df_track_basics)
 
     def _save_df_to_postgres(self, df_track_basics):
@@ -51,13 +51,14 @@ class ExtractSpotifyTracks(ExtractSpotifyBase):
             "rel_tracks_artists", self.engine, if_exists="append", index=False
         )
 
-    def _get_tracks_data_subset(self, aux_track_ids):
+    def get_tracks_data_subset(self, track_ids):
+        aux_track_ids = ",".join(track_ids)
         path = f"{self.spotify_api_uri}/tracks/?ids={aux_track_ids}"
         track_basics = []
         try:
             r = requests.get(path, headers=self.get_payload_with_token())
             if not r.ok:
-                raise RuntimeError(f"Falla _get_tracks_data_subset - {r.text}")
+                raise RuntimeError(f"Falla get_tracks_data_subset - {r.text}")
             j = json.loads(r.text)
             for f in j["tracks"]:
                 track_basics.append(self._get_tracks_data_individual(f))

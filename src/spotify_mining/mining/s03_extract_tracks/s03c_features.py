@@ -35,7 +35,7 @@ class ExtractSpotifyFeatures(ExtractSpotifyBase):
                 continue
             processed += len(track_ids)
             print(processed, end=" ")
-            df_track_features = self._get_features_subset(",".join(track_ids))
+            df_track_features = self.get_features_subset(track_ids)
             if len(df_track_features) > 0:
                 self._save_df_to_postgres(df_track_features)
 
@@ -44,7 +44,8 @@ class ExtractSpotifyFeatures(ExtractSpotifyBase):
             "track_features", self.engine, if_exists="append", index=False
         )
 
-    def _get_features_subset(self, aux_track_ids):
+    def get_features_subset(self, track_ids):
+        aux_track_ids = ",".join(track_ids)
         path = f"{self.spotify_api_uri}/audio-features/?ids={aux_track_ids}"
         track_features = []
         try:
