@@ -1,2 +1,3 @@
 include project.version
 include README.md
+include src/spotify_mining/configurations/templates/default.ini

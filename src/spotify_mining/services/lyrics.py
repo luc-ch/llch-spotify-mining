@@ -59,13 +59,18 @@ class GetLyrics:
         query = str(track_name) + " " + str(track_artist).replace(",", " ")
 
         with self.get_new_http_session() as http:
-            self.response = http.get(
-                f"{search_url}?q={query}", params=params, headers=headers
-            ).json()
+            page = http.get(f"{search_url}?q={query}", params=params, headers=headers)
+            if not page.ok:
+                self.response = None
+                return None
+            self.response = page.json()
         return self.response
 
     def check_hits(self):
         json = self.response
+        if json is None:
+            self.remote_song_info = None
+            return json
         remote_song_info = None
         for hit in json["response"]["hits"]:
             if (

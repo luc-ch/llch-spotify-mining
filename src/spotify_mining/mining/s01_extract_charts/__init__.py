@@ -13,7 +13,7 @@ from datetime import date, timedelta, datetime
 
 from spotify_mining.configurations import Configuration
 
-from ..services import postgres
+from ...services import postgres
 
 
 class ExtractCharts:

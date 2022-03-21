@@ -3,10 +3,10 @@
 import pandas as pd
 from sqlalchemy import create_engine
 
-from ..configurations import Configuration
+from ...configurations import Configuration
 
-from ..services import lyrics
-from ..services import postgres
+from ...services import lyrics
+from ...services import postgres
 
 
 class ExtractLyrics:
